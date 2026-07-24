@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import incomeRoutes from "./routes/incomeRoutes.js";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ connectDB();
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/income", incomeRoutes);
-
+app.use("/api/expense", expenseRoutes);
 // Serve static files (uploads)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

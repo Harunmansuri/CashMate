@@ -1,6 +1,7 @@
 import Income from "../models/Income.js";
 import User from "../models/User.js";
 import XLSX from "xlsx";
+
 export const addIncome = async (req, res) => {
   const user = await User.findById(req.user._id);
   try {
@@ -46,39 +47,24 @@ export const deleteIncome = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 }
-import XLSX from "xlsx";
-import Income from "../models/Income.js";
-
 export const downloadIncomesExcel = async (req, res) => {
+  const userId = req.user._id;
   try {
-    const userId = req.user._id;
-
-    // Fetch incomes of logged-in user
-    const incomes = await Income.find({ userId }).sort({ date: -1 });
-
-    // Convert data into Excel format
-    const data = incomes.map((item) => ({
+    const income = (await Income.find({ userId })).sort({ date: -1 });
+    const data = income.map((item) => ({
       Source: item.source,
       Amount: item.amount,
       Date: item.date,
     }));
-
-    // Create worksheet
     const worksheet = XLSX.utils.json_to_sheet(data);
 
-    // Create workbook
     const workbook = XLSX.utils.book_new();
-
-    // Add worksheet to workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, "Income");
 
-    // Convert workbook into buffer
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "buffer",
     });
-
-    // Set response headers
     res.setHeader(
       "Content-Disposition",
       'attachment; filename="income.xlsx"'
@@ -88,10 +74,11 @@ export const downloadIncomesExcel = async (req, res) => {
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
-
     // Send file
     res.send(excelBuffer);
-  } catch (error) {
+  }
+
+  catch {
     console.error(error);
 
     res.status(500).json({
@@ -100,49 +87,4 @@ export const downloadIncomesExcel = async (req, res) => {
     });
   }
 };
-/*
-Client Clicks Download
-        │
-        ▼
-GET /download-income
-        │
-        ▼
-JWT Middleware
-        │
-        ▼
-req.user._id
-        │
-        ▼
-MongoDB
-Income.find({ userId })
-        │
-        ▼
-Array of Incomes
-        │
-        ▼
-map()
-        │
-        ▼
-JSON Data
-        │
-        ▼
-json_to_sheet()
-        │
-        ▼
-Worksheet
-        │
-        ▼
-Workbook
-        │
-        ▼
-write()
-        │
-        ▼
-Excel Buffer
-        │
-        ▼
-res.send()
-        │
-        ▼
-income.xlsx Download
-*/
+
