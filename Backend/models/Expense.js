@@ -6,6 +6,7 @@ const ExpenseSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
+            index: true, // every dashboard/list query filters by userId — index it
         },
         icon: {
             type: String,
@@ -24,6 +25,7 @@ const ExpenseSchema = new mongoose.Schema(
         date: {
             type: Date,
             default: Date.now,
+            index: true, // dashboard filters/sorts by date range constantly
         },
     },
     {

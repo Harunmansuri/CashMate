@@ -1,63 +1,95 @@
 import Expense from "../models/Expense.js";
-import User from "../models/User.js";
-import XLSX from "xlsx";
 
+// @route   POST /api/expense/add
+// @access  Private
 export const addExpense = async (req, res) => {
-    const user = await User.findById(req.user._id);
     try {
         const { icon, source, amount, date } = req.body;
 
-        //validation
+        // validation
         if (!source || !amount || !date) {
             return res
                 .status(400)
                 .json({ message: "Source, Amount and Date are required" });
         }
-        const newExpense = new Expense({
-            userId: user._id,
+
+        if (amount <= 0) {
+            return res.status(400).json({ message: "Amount must be greater than 0" });
+        }
+
+        const newExpense = await Expense.create({
+            userId: req.user._id,
             icon,
             source,
             amount,
             date: new Date(date),
         });
-        const savedExpense = await newExpense.save();
-        res.status(201).json(savedExpense);
+
+        res.status(201).json(newExpense);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
-export const getAllExpense = async (req, res) => {
-    const userId = req.user._id;
 
+// @route   GET /api/expense/get
+// @access  Private
+export const getAllExpense = async (req, res) => {
     try {
-        const Expense = await Expense.find({ userId: userId }).sort({ date: -1 });
-        res.status(200).json(Expense);
+        const userId = req.user._id;
+
+        // NOTE: never name a local variable the same as the imported model
+        // ("const Expense = await Expense.find(...)") — that shadows the
+        // import inside its own initializer and throws a ReferenceError
+        // ("Cannot access 'Expense' before initialization").
+        const expenses = await Expense.find({ userId }).sort({ date: -1 });
+
+        res.status(200).json(expenses);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-}
+};
+
+// @route   DELETE /api/expense/:id
+// @access  Private
 export const deleteExpense = async (req, res) => {
     try {
-        const Expense = await Expense.findByIdAndDelete(req.params.id);
-        if (!Expense) {
+        // scope the delete to the logged-in user — findByIdAndDelete alone
+        // lets any authenticated user delete *anyone's* expense by guessing
+        // an ID. Always match userId too.
+        const expense = await Expense.findOneAndDelete({
+            _id: req.params.id,
+            userId: req.user._id,
+        });
+
+        if (!expense) {
             return res.status(404).json({ message: "Expense not found" });
         }
+
         res.status(200).json({ message: "Expense deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-}
+};
+
+// @route   GET /api/expense/downloadexcel
+// @access  Private
 export const downloadExpenseExcel = async (req, res) => {
-    const userId = req.user._id;
     try {
-        const Expense = (await Expense.find({ userId })).sort({ date: -1 });
-        const data = Expense.map((item) => ({
+        const userId = req.user._id;
+
+        // lazy-load xlsx — keeps it out of the main bundle/cold-start path
+        // for requests that never hit this route
+        const XLSX = (await import("xlsx")).default;
+
+        const expenses = await Expense.find({ userId }).sort({ date: -1 });
+
+        const data = expenses.map((item) => ({
             Source: item.source,
             Amount: item.amount,
-            Date: item.date,
+            Date: item.date.toISOString().split("T")[0],
         }));
-        const worksheet = XLSX.utils.json_to_sheet(data);
 
+        const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Expense");
 
@@ -65,26 +97,21 @@ export const downloadExpenseExcel = async (req, res) => {
             bookType: "xlsx",
             type: "buffer",
         });
+
         res.setHeader(
             "Content-Disposition",
             'attachment; filename="expense.xlsx"'
         );
-
         res.setHeader(
             "Content-Type",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         );
-        // Send file
         res.send(excelBuffer);
-    }
-
-    catch {
+    } catch (error) {
         console.error(error);
-
         res.status(500).json({
             success: false,
             message: "Failed to download Excel file",
         });
     }
 };
-
