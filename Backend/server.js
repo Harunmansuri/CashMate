@@ -35,7 +35,9 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/income", incomeRoutes);
 app.use("/api/expense", expenseRoutes);
-app.use("/api/expense", dashboardRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+
+
 // Serve static files (uploads)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

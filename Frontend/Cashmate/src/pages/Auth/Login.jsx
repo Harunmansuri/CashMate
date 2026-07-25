@@ -22,6 +22,7 @@ const Login = () => {
     } else {
       setError("");
       // Mock login process
+
     }
   };
   return (
