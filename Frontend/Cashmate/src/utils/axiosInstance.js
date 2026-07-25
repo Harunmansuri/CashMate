@@ -25,5 +25,29 @@ axiosInstance.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+//response INterceptoor 
+axiosInstance.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        //handles comon eror glovaly 
+        if (error.response) {
+            if (error.response.status === 401) {
+                //redirect to login page
+                window.location.href = '/login';
+            }
+            else if (error.response.status === 500) {
+                console.error("Server error .please try again later");
+            }
+            else if (error.code === "ECONNABORTED") {
+                console.error("Request timeout.Please try again.");
+            }
+            return Promise.reject(error);
+        }
+
+    }
+)
+
 
 export default axiosInstance;

@@ -4,7 +4,7 @@ export const API_PATHS = {
     AUTH: {
         LOGIN: "/api/auth/login",
         REGISTER: "/api/auth/register",
-        GET_USER_INFO: "/api/auth/getUSER",
+        GET_USER_INFO: "/api/auth/getUser",
     },
     DASHBOARD: {
         GET_DATA: "/api/dashboard",

@@ -2,13 +2,17 @@ import React from "react";
 import { useState } from "react";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import Input from "../../components/Inputs/Input";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
+import { API_PATHS } from "../../utils/apiPaths";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
   const validateEmail = (email) => {
+
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(String(email).toLowerCase());
   };
@@ -22,7 +26,27 @@ const Login = () => {
     } else {
       setError("");
       // Mock login process
+      try {
+        const response = await axiosInstance.post(
+          API_PATHS.AUTH.LOGIN, {
+          email,
+          password,
+        }
+        );
+        const { token, user } = response.data;
+        if (token) {
+          localStorage.setItem("token", token);
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        if (error.response && error.response.data.message) {
 
+          setError(error.response.data.message);
+        }
+        else {
+          setError("something went wrong .Please Try again ");
+        }
+      }
     }
   };
   return (
