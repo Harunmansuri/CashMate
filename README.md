@@ -152,23 +152,7 @@ CLIENT_URL=http://localhost:5173
 
 ---
 
-## 📷 Screenshots
 
-Add screenshots here.
-
-```
-Home Page
-
-Dashboard
-
-Expense Page
-
-Income Page
-
-Analytics
-```
-
----
 
 ## 🎯 Future Enhancements
 
