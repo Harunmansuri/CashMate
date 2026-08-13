@@ -4,13 +4,13 @@ import Expense from "../models/Expense.js";
 // @access  Private
 export const addExpense = async (req, res) => {
     try {
-        const { icon, source, amount, date } = req.body;
+        const { icon, category, amount, date } = req.body;
 
         // validation
-        if (!source || !amount || !date) {
+        if (!category || !amount || !date) {
             return res
                 .status(400)
-                .json({ message: "Source, Amount and Date are required" });
+                .json({ message: "Category, Amount and Date are required" });
         }
 
         if (amount <= 0) {
@@ -20,7 +20,7 @@ export const addExpense = async (req, res) => {
         const newExpense = await Expense.create({
             userId: req.user._id,
             icon,
-            source,
+            category,
             amount,
             date: new Date(date),
         });
@@ -84,7 +84,7 @@ export const downloadExpenseExcel = async (req, res) => {
         const expenses = await Expense.find({ userId }).sort({ date: -1 });
 
         const data = expenses.map((item) => ({
-            Source: item.source,
+            Category: item.category,
             Amount: item.amount,
             Date: item.date.toISOString().split("T")[0],
         }));

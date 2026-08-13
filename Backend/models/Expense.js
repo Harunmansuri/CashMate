@@ -12,7 +12,11 @@ const ExpenseSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
-        source: {
+        // Was `source` before (copy-pasted from the Income schema) — an
+        // expense doesn't have a "source", it has a category (Groceries,
+        // Rent, Travel, etc). Renamed to match what the frontend actually
+        // sends and displays.
+        category: {
             type: String,
             required: true,
             trim: true,

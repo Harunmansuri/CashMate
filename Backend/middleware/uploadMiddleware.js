@@ -1,10 +1,19 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+
+// Make sure the uploads folder exists — multer's diskStorage throws if the
+// destination directory is missing (fresh clone won't have it since it's
+// usually gitignored).
+const uploadDir = "uploads/";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueName =
@@ -13,14 +22,17 @@ const storage = multer.diskStorage({
   },
 });
 
-// File filter (optional but recommended)
+// File filter
 const fileFilter = (req, file, cb) => {
-  const allowedtypes = ['image/jpeg', 'image/png', 'image/jpg'];
-  if (allowedtypes.includes(file.mimitype)) {
+  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+  // BUG FIX: this was `file.mimitype` (typo) which is always undefined,
+  // so `allowedTypes.includes(undefined)` was always false — every single
+  // upload was being silently rejected regardless of file type. That's
+  // the "upload not working" issue.
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
-  }
-  else {
-    cb(new Error('Only .jpeg .jpg and .png fromats are allowed'), false);
+  } else {
+    cb(new Error("Only .jpeg, .jpg and .png formats are allowed"), false);
   }
 };
 
@@ -28,6 +40,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB cap, avoids huge accidental uploads
 });
 
 export default upload;

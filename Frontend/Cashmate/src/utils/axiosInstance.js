@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
     },
 });
 
-// Request Interceptor
+// Request Interceptor — attaches the JWT saved at login/signup
 axiosInstance.interceptors.request.use(
     (config) => {
         const accessToken = localStorage.getItem("token");
@@ -25,29 +25,37 @@ axiosInstance.interceptors.request.use(
         return Promise.reject(error);
     }
 );
-//response INterceptoor 
+
+// Response Interceptor
 axiosInstance.interceptors.response.use(
     (response) => {
         return response;
     },
     (error) => {
-        //handles comon eror glovaly 
+        // Server responded with an error status
         if (error.response) {
             if (error.response.status === 401) {
-                //redirect to login page
-                window.location.href = '/login';
+                // token missing/expired/invalid — clear the stale session and
+                // send the user back to login instead of leaving them stuck
+                localStorage.removeItem("token");
+                localStorage.removeItem("cashmate_user");
+                if (window.location.pathname !== "/login") {
+                    window.location.href = "/login";
+                }
+            } else if (error.response.status === 500) {
+                console.error("Server error. Please try again later.");
             }
-            else if (error.response.status === 500) {
-                console.error("Server error .please try again later");
-            }
-            else if (error.code === "ECONNABORTED") {
-                console.error("Request timeout.Please try again.");
-            }
-            return Promise.reject(error);
+        } else if (error.code === "ECONNABORTED") {
+            console.error("Request timeout. Please try again.");
+        } else {
+            // network error / server unreachable (e.g. backend not running)
+            console.error("Network error. Is the API server running?");
         }
-
+        // Always propagate the error so callers can show a toast, etc.
+        // (the original version silently returned `undefined` here for
+        // non-response errors, which broke every .catch() downstream)
+        return Promise.reject(error);
     }
-)
-
+);
 
 export default axiosInstance;

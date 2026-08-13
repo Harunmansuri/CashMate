@@ -1,61 +1,52 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import Input from "../../components/Inputs/Input";
-import { Link, Navigate } from "react-router-dom";
-import axiosInstance from "../../utils/axiosInstance";
-import { API_PATHS } from "../../utils/apiPaths";
+import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { loginUser } from "../../utils/api";
+import { saveSession } from "../../utils/storage";
+import { validateEmail } from "../../utils/helper";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const validateEmail = (email) => {
-
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
-  };
   const handleLogin = async (e) => {
     e.preventDefault();
-    // Basic validation
+
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
-    } else if (password.length < 6) {
+      return;
+    }
+    if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
-    } else {
-      setError("");
-      // Mock login process
-      try {
-        const response = await axiosInstance.post(
-          API_PATHS.AUTH.LOGIN, {
-          email,
-          password,
-        }
-        );
-        const { token, user } = response.data;
-        if (token) {
-          localStorage.setItem("token", token);
-          navigate("/dashboard");
-        }
-      } catch (error) {
-        if (error.response && error.response.data.message) {
+      return;
+    }
 
-          setError(error.response.data.message);
-        }
-        else {
-          setError("something went wrong .Please Try again ");
-        }
-      }
+    setError("");
+    setLoading(true);
+    try {
+      const response = await loginUser({ email, password });
+      const user = saveSession(response);
+      toast.success(`Welcome back, ${user.fullName.split(" ")[0]}!`);
+      navigate("/dashboard");
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        (err.request ? "Could not reach the server. Is it running?" : "Something went wrong. Please try again.");
+      setError(message);
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <AuthLayout>
       <div className="lg:w-[80%] h-3/4 md:h-full flex flex-col justify-center">
-        <h3 className="text-xl font-semibold text-Blue">
-          {" "}
-          Welcome Back to CashMate
-        </h3>
+        <h3 className="text-xl font-semibold text-purple-700">Welcome Back to CashMate</h3>
         <p className="text-md text-gray-600 mb-6 mt-[5px]">
           Please login to your account to continue
         </p>
@@ -66,24 +57,25 @@ const Login = () => {
             placeholder="Email Address"
             label="Email Address"
             type="text"
-          ></Input>
+          />
           <Input
             value={password}
             onChange={({ target }) => setPassword(target.value)}
             placeholder="Password"
             label="Password"
             type="password"
-          ></Input>
+          />
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-purple-600 text-white py-2.5 rounded-lg hover:bg-purple-700 transition"
+            disabled={loading}
+            className="w-full bg-purple-600 text-white py-2.5 rounded-lg hover:bg-purple-700 transition disabled:opacity-60"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
-          <p>
+          <p className="mt-4 text-sm text-slate-600">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-purple-600 hover:underline">
+            <Link to="/signup" className="text-purple-600 font-medium hover:underline">
               Sign Up
             </Link>
           </p>
