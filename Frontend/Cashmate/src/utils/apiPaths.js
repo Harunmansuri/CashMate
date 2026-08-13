@@ -1,6 +1,6 @@
 // Points at the Express server (server.js -> app.listen(process.env.PORT || 5000)).
 // Override with a .env file at the project root: VITE_API_BASE_URL=http://localhost:5000
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const API_PATHS = {
     AUTH: {
