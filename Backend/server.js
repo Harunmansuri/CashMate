@@ -7,7 +7,8 @@ import incomeRoutes from "./routes/incomeRoutes.js";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
-import dashboardRoutes from "./routes/dashboardRoutes.js"
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import aiExpenseRoutes from "./routes/aiExpenseRoutes.js"; // NEW
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ const __dirname = path.dirname(__filename);
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -36,7 +37,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/income", incomeRoutes);
 app.use("/api/expense", expenseRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
+app.use("/api/ai-expense", aiExpenseRoutes); // NEW
 
 // Serve static files (uploads)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
